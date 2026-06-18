@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tally — Live audience response, no app required</title>
+<meta name="description" content="Tally turns any room into an interactive one. Attendees join in seconds with a code or QR scan — no app, no account. Run live polls and slides from one dashboard.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --surface: #141414;
+    --surface-2: #1A1A1A;
+    --border: #2A2A2A;
+    --border-soft: #1E1E1E;
+
+    --text: #E0E0E0;
+    --text-dim: #8C8C8C;
+    --text-faint: #565656;
+
+    --teal: #2A8DF3;
+    --teal-bright: #5BA8F7;
+    --teal-wash: rgba(42, 141, 243, 0.14);
+
+    --amber: #C97D3C;
+    --amber-bright: #DE9655;
+
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'DM Mono', 'SF Mono', monospace;
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(42,141,243,0.07), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 100%, rgba(201,125,60,0.04), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0;
+  }
+  .nav-mark { display: flex; align-items: baseline; gap: 8px; }
+  .nav-mark-word { font-family: var(--font-display); font-weight: 700; font-size: 21px; letter-spacing: 0.01em; }
+  .nav-mark-tag { font-family: var(--font-mono); font-size: 11px; color: var(--teal-bright); letter-spacing: 0.18em; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-body); font-weight: 600; font-size: 14.5px;
+    padding: 11px 22px; border-radius: 999px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .btn-primary { background: var(--teal); color: #06121F; }
+  .btn-primary:hover { background: var(--teal-bright); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(42,141,243,0.28); }
+  .btn-ghost { border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--teal); color: var(--teal-bright); }
+  .btn-sm { padding: 9px 18px; font-size: 13.5px; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 64px 0 88px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-faint); display: flex; align-items: center; gap: 9px; margin-bottom: 20px;
+  }
+  .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 0 rgba(42,141,243,0.5); animation: pulse-dot 2.2s ease-out infinite; }
+  @keyframes pulse-dot {
+    0% { box-shadow: 0 0 0 0 rgba(42,141,243,0.45); }
+    70% { box-shadow: 0 0 0 7px rgba(42,141,243,0); }
+    100% { box-shadow: 0 0 0 0 rgba(42,141,243,0); }
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 700; line-height: 1.04;
+    font-size: clamp(38px, 5vw, 56px); letter-spacing: -0.01em; margin-bottom: 22px;
+  }
+  h1 em { font-style: italic; color: var(--teal-bright); }
+  .hero-sub { font-size: 17.5px; line-height: 1.6; color: var(--text-dim); max-width: 480px; margin-bottom: 32px; }
+  .hero-ctas { display: flex; gap: 14px; align-items: center; margin-bottom: 28px; }
+  .hero-note { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+
+  /* ---------- Live poll signature element ---------- */
+  .live-poll-card {
+    background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--radius-lg);
+    padding: 26px 26px 22px; box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    position: relative; overflow: hidden;
+  }
+  .live-poll-card::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(224,224,224,0.05) 1px, transparent 1px);
+    background-size: 22px 22px; pointer-events: none;
+  }
+  .live-poll-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; position: relative; z-index: 1; }
+  .live-poll-tag {
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--amber-bright); display: flex; align-items: center; gap: 7px;
+  }
+  .live-poll-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amber); }
+  .live-poll-count { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); }
+  .live-poll-q { font-family: var(--font-display); font-size: 19px; font-weight: 600; margin-bottom: 20px; position: relative; z-index: 1; }
+  .poll-row { margin-bottom: 14px; position: relative; z-index: 1; }
+  .poll-row-label { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; color: var(--text-dim); }
+  .poll-row-label span:last-child { font-family: var(--font-mono); color: var(--text); }
+  .poll-bar-track { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .poll-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--teal), var(--teal-bright)); transition: width 1.1s cubic-bezier(0.16,1,0.3,1); }
+  .poll-bar-fill.alt { background: linear-gradient(90deg, var(--amber), var(--amber-bright)); }
+  .live-poll-foot { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); margin-top: 16px; position: relative; z-index: 1; }
+
+  /* ---------- Section shared ---------- */
+  section { padding: 72px 0; border-top: 1px solid var(--border-soft); }
+  .section-eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 14px; }
+  h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 3.4vw, 38px); letter-spacing: -0.01em; margin-bottom: 16px; max-width: 600px; }
+  .section-sub { font-size: 16px; color: var(--text-dim); max-width: 540px; line-height: 1.6; }
+
+  /* ---------- Proof points ---------- */
+  .proof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 44px; }
+  .proof-card { border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 26px; background: var(--surface); }
+  .proof-card-num { font-family: var(--font-mono); font-size: 13px; color: var(--teal-bright); margin-bottom: 14px; }
+  .proof-card h3 { font-family: var(--font-body); font-weight: 600; font-size: 16.5px; margin-bottom: 9px; }
+  .proof-card p { font-size: 14.5px; color: var(--text-dim); line-height: 1.55; }
+
+  /* ---------- How it works ---------- */
+  .steps { margin-top: 44px; display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 64px 1fr; gap: 24px; padding: 26px 0; border-top: 1px solid var(--border-soft); }
+  .step:first-child { border-top: none; }
+  .step-num { font-family: var(--font-mono); font-size: 13px; color: var(--text-faint); padding-top: 3px; }
+  .step h3 { font-family: var(--font-body); font-weight: 600; font-size: 17px; margin-bottom: 6px; }
+  .step p { font-size: 14.5px; color: var(--text-dim); line-height: 1.55; max-width: 520px; }
+
+  /* ---------- Closing CTA ---------- */
+  .closing { text-align: center; padding: 88px 0; }
+  .closing h2 { margin: 0 auto 14px; max-width: none; }
+  .closing .section-sub { margin: 0 auto 32px; }
+  .closing-ctas { display: flex; gap: 14px; justify-content: center; }
+
+  footer {
+    border-top: 1px solid var(--border-soft); padding: 32px 0 44px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-faint);
+  }
+
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; padding: 44px 0 56px; }
+    .proof-grid { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 40px 1fr; }
+    nav .btn-sm { padding: 8px 14px; font-size: 13px; }
+    footer { flex-direction: column; gap: 10px; text-align: center; }
+  }
+
+  /* Visible keyboard focus, not suppressed */
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--teal-bright); outline-offset: 3px; border-radius: 6px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .eyebrow-dot { animation: none; }
+    .poll-bar-fill { transition: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="nav-mark">
+      <span class="nav-mark-word">TALLY</span>
+      <span class="nav-mark-tag">A·R·S</span>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="https://johnlaz.github.io/tally/" target="_blank" rel="noopener">Launch Tally</a>
+  </nav>
+
+  <section class="hero" style="border-top:none; padding-top:24px;">
+    <div>
+      <div class="eyebrow"><span class="eyebrow-dot"></span> Live audience response</div>
+      <h1>Turn any room<br>into <em>one live vote.</em></h1>
+      <p class="hero-sub">Attendees join in seconds with a code or QR scan — no app, no account. You run the room from one dashboard: ask, watch votes land, move on.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="https://johnlaz.github.io/tally/" target="_blank" rel="noopener">Launch Tally</a>
+        <a class="btn btn-ghost" href="#how-it-works">See how it works</a>
+      </div>
+      <div class="hero-note">No install for attendees · Free to run · Works on any phone</div>
+    </div>
+
+    <div class="live-poll-card" role="img" aria-label="A simulated live poll, animating to demonstrate how Tally looks during a real event">
+      <div class="live-poll-head">
+        <div class="live-poll-tag"><span class="live-poll-tag-dot"></span> Live now</div>
+        <div class="live-poll-count" id="poll-count">128 responses</div>
+      </div>
+      <div class="live-poll-q">Should we ship the redesign?</div>
+      <div class="poll-row">
+        <div class="poll-row-label"><span>Yes, ship it</span><span id="pct-a">62%</span></div>
+        <div class="poll-bar-track"><div class="poll-bar-fill" id="bar-a" style="width:62%;"></div></div>
+      </div>
+      <div class="poll-row">
+        <div class="poll-row-label"><span>Needs another pass</span><span id="pct-b">38%</span></div>
+        <div class="poll-bar-track"><div class="poll-bar-fill alt" id="bar-b" style="width:38%;"></div></div>
+      </div>
+      <div class="live-poll-foot">This is a demo — actual results update as real votes arrive.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-eyebrow">Why hosts use it</div>
+    <h2>Built for the person actually running the room.</h2>
+    <p class="section-sub">Not a survey tool repurposed for events. Tally is shaped around the moment you're standing in front of people and need the room to move with you.</p>
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="proof-card-num">01</div>
+        <h3>Zero friction to join</h3>
+        <p>A phone and a browser is all it takes. No app store, no sign-up, no dead ends between a QR scan and a vote.</p>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-num">02</div>
+        <h3>A dashboard built for you</h3>
+        <p>A live preview shows exactly what your audience sees, next to your controls — and keyboard shortcuts keep the room moving without breaking eye contact with your laptop.</p>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-num">03</div>
+        <h3>Polls and slides, one deck</h3>
+        <p>Mix voting questions with full-screen images, audio, or announcement slides — a complete session flow, not just a string of multiple-choice questions.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-it-works">
+    <div class="section-eyebrow">The actual sequence</div>
+    <h2>From empty deck to exported report, in four steps.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div><h3>Build</h3><p>Assemble your deck: polls, slides, or both, in any order. Generate a batch of questions on a topic, or write them by hand.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div><h3>Start</h3><p>Starting a session gives you a join code and QR. Attendees scan or type it on their own phone — nothing to install.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div><h3>Run</h3><p>Open one item at a time. Votes tally live on your dashboard, with a preview of exactly what attendees see.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div><h3>End &amp; export</h3><p>Ending a session generates a report and exports your data. Import it later to reuse questions or compare results.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing" style="border-top: 1px solid var(--border-soft);">
+    <div class="section-eyebrow" style="justify-content:center; display:flex;">Ready when you are</div>
+    <h2>Your next session starts whenever you open the tab.</h2>
+    <p class="section-sub">No account to create, nothing to install first. Build a deck and you're running a live room in minutes.</p>
+    <div class="closing-ctas">
+      <a class="btn btn-primary" href="https://johnlaz.github.io/tally/" target="_blank" rel="noopener">Launch Tally</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>Tally ARS — a LAZLAB Creations project</span>
+    <span>johnlaz.github.io/tally</span>
+  </footer>
+</div>
+
+<script>
+  // The hero's signature element: a small live-feeling poll that reshuffles
+  // on its own, unprompted, so the very first thing a visitor sees is the
+  // product's core mechanic actually happening rather than a static mock.
+  (function () {
+    var count = 128;
+    var pct = 62;
+    function tick() {
+      count += Math.floor(Math.random() * 4) + 1;
+      pct += (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1);
+      pct = Math.max(28, Math.min(78, pct));
+      document.getElementById('poll-count').textContent = count + ' responses';
+      document.getElementById('bar-a').style.width = pct + '%';
+      document.getElementById('bar-b').style.width = (100 - pct) + '%';
+      document.getElementById('pct-a').textContent = pct + '%';
+      document.getElementById('pct-b').textContent = (100 - pct) + '%';
+    }
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion) {
+      setInterval(tick, 2600);
+    }
+  })();
+</script>
+
+</body>
+</html>
